@@ -3,7 +3,7 @@
 #define SRC_IP      "127.0.0.1"     // IP источника
 #define DST_IP      "127.0.0.1"     // IP назначения
 #define SRC_PORT    3512            // Порт источника
-#define DST_PORT    1335            // Порт назначения
+#define DST_PORT    1336            // Порт назначения
 #define MSG         "Hello, World!"  // Посылаемое сообщение
 
 int main()
@@ -14,7 +14,7 @@ int main()
     int                 psize;  // Размер данных
 
     // Создаем RAW сокет
-    sock = socket(AF_INET, SOCK_RAW, IPPROTO_UDP);
+    sock = socket(AF_INET, SOCK_RAW, IPPROTO_RAW);
     if (sock == -1){
         perror("ERROR create RAW socket");
         exit(-1);
@@ -26,9 +26,13 @@ int main()
     addr.sin_family = AF_INET;
     addr.sin_addr.s_addr = inet_addr(DST_IP);
 
-    // Формируем пакет транспортного уровня
+    // Обворачиваем заголовком транспортного уровня
     data = udp_build(SRC_IP, DST_IP, SRC_PORT, DST_PORT, MSG, strlen(MSG));
     psize = strlen(MSG) + sizeof(struct header_udp);
+
+    // Обворачиваем заголовком сетевого уровня
+    data = ipv4_build(SRC_IP, DST_IP, data, psize);
+    psize += sizeof(struct header_ipv4);
 
     //Отправляем
     sendto(sock, data, psize, 0, (struct sockaddr *)&addr, sizeof(addr));
