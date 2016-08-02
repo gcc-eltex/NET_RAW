@@ -1,14 +1,14 @@
 #include "../header/raw.h"
 
-char *ipv4_build(char *sip, char *dip, char *data, int dlen)
+u_char *ipv4_build(u_char *sip, u_char *dip, u_char *data, int dlen)
 {
-    char                *packet;    // Указатель на начало пакета
+    u_char              *packet;    // Указатель на начало пакета
     int                 pack_len;   // Размер пакета
     struct header_ipv4  *hdr_ip;    // Заголовок IP
 
     pack_len = sizeof(struct header_ipv4) + dlen;
     // Выделяем память под пакет и записываем передаваемые данные
-    packet = calloc(sizeof(char), pack_len);
+    packet = calloc(sizeof(u_char), pack_len);
     memcpy(packet + sizeof(struct header_ipv4), data, dlen);
 
     // Заполняем заголовок
@@ -20,7 +20,7 @@ char *ipv4_build(char *sip, char *dip, char *data, int dlen)
     hdr_ip->proto = IPPROTO_UDP;
     hdr_ip->sip = inet_addr(sip);
     hdr_ip->dip = inet_addr(dip);
-    hdr_ip->chsum = htons(ipv4_checksum((char *)hdr_ip));
+    hdr_ip->chsum = htons(ipv4_checksum((u_char *)hdr_ip));
 
     // Подчищаем старые данные, поскольку выделена новая память
     free(data);
@@ -29,12 +29,12 @@ char *ipv4_build(char *sip, char *dip, char *data, int dlen)
 
 
 /*
- * Выполняет подсчет контрольной суммы заголовка IP. 
+ * Выполняет подсчет контрольной суммы заголовка IP
  * 
  * @param hdr_ipv4  Указатель на начало заголовка
  * @retval          Контрольная сумма
  */
-u_short ipv4_checksum(char *hdr_ipv4)
+u_short ipv4_checksum(u_char *hdr_ipv4)
 {
     int     chsum;  // Контрольная сумма
     u_short fbyte;  // Первый байт 16ти битного блока
@@ -47,11 +47,11 @@ u_short ipv4_checksum(char *hdr_ipv4)
      * Считаем сумму пропуская поле контрольной суммы в заголовке. 
      * Суммирование производим 16ти битными блоками
      */
-    for (int i = 0; i < length * 4; i+=2){
+    for (int i = 0; i < length; i += 2){
         if (i == 10)
             continue;
-        fbyte = hdr_ipv4[i];
-        sbyte = hdr_ipv4[i + 1];
+        fbyte = (hdr_ipv4[i]);
+        sbyte = (hdr_ipv4[i + 1]);
         chsum += (fbyte<<8)|sbyte;
     }
     
